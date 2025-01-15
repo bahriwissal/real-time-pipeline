@@ -10,7 +10,9 @@ from pyspark.sql.types import StructType, StructField, StringType
 
 
 
-
+"""
+This Function creates a Cassandra keyspace if it doesn't already exist
+"""
 def create_keyspace(session):
     session.execute("""
             CREATE KEYSPACE IF NOT EXISTS spark_streams
@@ -18,6 +20,11 @@ def create_keyspace(session):
     """)
     
     print("Keyspace created ")
+
+"""
+This function creates a table created_users within the spark_streams keyspace if
+it doesn't exist
+"""
 
 def create_table(session): 
     session.execute("""
@@ -38,6 +45,10 @@ def create_table(session):
     print("Table created ")
 
 
+"""
+this function is designed to insert a new user's data into teh created_users table 
+in Cassanra
+"""
 def insert_data(session, **kwargs):
     print("inserting data...")
 
@@ -67,6 +78,10 @@ def insert_data(session, **kwargs):
         logging.error(f"data couldn't be inserted due to {e}")
 
 
+"""
+This function create a spark session for processing data
+It also configures teh connection to the cassadra database and kafka 
+"""
 def create_spark_connection():
     try : 
         spark_conn = SparkSession.builder \
@@ -86,6 +101,11 @@ def create_spark_connection():
 
         return None
     
+"""
+This function connects to the Kafka server and reads message from Kafka topic 
+named users_created
+"""
+    
 def connect_to_kafka(spark_conn):
     try:
         # Use spark connection to read data from kafka 
@@ -102,6 +122,13 @@ def connect_to_kafka(spark_conn):
     except Exception as e:
         logging.error(f"kafka dataframe couldn't be created due to: {e}")
         return None
+    
+"""
+THis function processes the Kafka stream, The data domr form kafka is binary format,
+so it converts it into string 
+from_json function is used to parse the json into structred rows based on the schema
+provided 
+"""
     
 def create_selection_df_from_kafka(spark_df):
     schema = StructType([
@@ -124,6 +151,12 @@ def create_selection_df_from_kafka(spark_df):
     print(selection)
     return selection
 
+"""
+This function connect to a local Cassandra cluster using the Cassandra Python Driver
+(Cluster(['localhost'])), it returns a cassandra session that is used to execute 
+Cassandra commands 
+"""
+
 def create_cassandra_connection():
     try : 
         # Connecting to cassandra cluster 
@@ -134,6 +167,22 @@ def create_cassandra_connection():
         logging.error(f"Cassadra session couldn't be created due to {e}")
 
         return None
+    
+
+""" 
+The main flow is : 
+- Create spark session 
+- Reads data from Kafka using the spark Connection 
+- Parse the data into a structred format with a defined schema 
+- Connect to Cassandra Database and create keyspace and the table 
+- Start streaming :
+    -- The selection_df.writeStream.format("org.apache.spark.sql.cassandra")
+    begins the process of writing the structured Kafka stream data into the 
+    Cassandra database.
+    -- .option('keyspace', 'spark_streams').option('table', 'created_users') 
+    configures the target keyspace and table in Cassandra for the stream.
+    -- start() starts the streaming job
+    --  awaitTermination() keeps the stream running indefinitely. """
 
 if __name__ == "__main__":
     # create spark connection
@@ -151,11 +200,11 @@ if __name__ == "__main__":
             create_keyspace(cassandra_session)
             create_table(cassandra_session)
 
-            # logging.info("Streaming is being started...")
+            logging.info("Streaming is being started...")
 
-            # streaming_query = (selection_df.writeStream.format("org.apache.spark.sql.cassandra")
-            #                    .option('keyspace', 'spark_streams')
-            #                    .option('table', 'created_users')
-            #                    .start())
+            streaming_query = (selection_df.writeStream.format("org.apache.spark.sql.cassandra")
+                               .option('keyspace', 'spark_streams')
+                               .option('table', 'created_users')
+                               .start())
 
-            # streaming_query.awaitTermination()
+            streaming_query.awaitTermination()
