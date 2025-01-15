@@ -43,8 +43,8 @@ The global architecture of this project is structured around the following key s
 ## Installation and Setup
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/yourusername/scalable-data-pipeline.git
-   cd scalable-data-pipeline
+   git clone git@github.com:bahriwissal/real-time-pipeline.git
+   cd real-time-pipeline
    ```
 
 2. **Set Up Docker**:
@@ -65,18 +65,6 @@ The global architecture of this project is structured around the following key s
 
 6. **Access Processed Data**:
    - Query the processed data from Cassandra using the Cassandra Query Language (CQL).
-
-
-
-## Directory Structure
-```
-scalable-data-pipeline/
-├── dags/                 # Airflow DAG definitions
-├── kafka/                # Kafka configuration files
-├── spark/                # Spark processing scripts
-├── docker-compose.yml    # Docker Compose configuration
-├── README.md             # Project documentation
-```
 
 
 Feel free to contribute to this project by submitting pull requests or opening issues!
